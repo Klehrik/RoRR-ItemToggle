@@ -1,4 +1,5 @@
 Allows for selecting which items should appear in a run.  
+If a disabled item is dropped, it will be turned into a random item of the same tier.  
 (Note that you cannot toggle items during a run)
 
 Not tested in multiplayer.
