@@ -1,4 +1,4 @@
--- Item Toggle v1.0.0
+-- Item Toggle v1.0.1
 -- Klehrik
 
 log.info("Successfully loaded ".._ENV["!guid"]..".")
@@ -37,6 +37,18 @@ local rarity_toggles = {white_toggle, green_toggle, red_toggle, orange_toggle, y
 local rarity_item_tables = {Items.white_items, Items.green_items, Items.red_items, Items.orange_items, Items.yellow_items}
 
 
+local function save_to_file()
+    -- Save to file
+    pcall(toml.encodeToFile, {
+        white = white_toggle,
+        green = green_toggle,
+        red = red_toggle,
+        orange = orange_toggle,
+        yellow = yellow_toggle,
+    }, {file = file_path, overwrite = true})
+end
+
+
 -- Loop through all rarities and add all item buttons
 for r = 1, #rarity_names do
     gui.add_imgui(function()
@@ -48,8 +60,10 @@ for r = 1, #rarity_names do
 
             if ImGui.Button("Enable All") and can_toggle then
                 for i = 1, #toggle do toggle[i] = true end
+                save_to_file()
             elseif ImGui.Button("Disable All") and can_toggle then
                 for i = 1, #toggle do toggle[i] = false end
+                save_to_file()
             end
 
             ImGui.Text("")
@@ -60,15 +74,7 @@ for r = 1, #rarity_names do
                 if toggle[i] then c = "v" end
                 if ImGui.Button("["..c.."]  "..names[i]) and can_toggle then
                     toggle[i] = not toggle[i]
-                    
-                    -- Save to file
-                    pcall(toml.encodeToFile, {
-                        white = white_toggle,
-                        green = green_toggle,
-                        red = red_toggle,
-                        orange = orange_toggle,
-                        yellow = yellow_toggle,
-                    }, {file = file_path, overwrite = true})
+                    save_to_file()
                 end
             end
 
