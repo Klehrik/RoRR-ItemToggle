@@ -1,4 +1,4 @@
--- Item Toggle v1.0.1
+-- Item Toggle v1.0.2
 -- Klehrik
 
 log.info("Successfully loaded ".._ENV["!guid"]..".")
@@ -118,20 +118,23 @@ gm.pre_script_hook(gm.constants.__input_system_tick, function()
 
                 -- Get toggle table of item based on rarity
                 local rarity = item[3]
-                local toggle = rarity_toggles[rarity]
+                if rarity ~= Items.rarities.purple then
+                    
+                    local toggle = rarity_toggles[rarity]
 
-                -- Subtract pos by length of previous rarities
-                if rarity > 1 then pos = pos - #Items.white_items end
-                if rarity > 2 then pos = pos - #Items.green_items end
-                if rarity > 3 then pos = pos - #Items.red_items end
-                if rarity > 4 then pos = pos - #Items.orange_items end
-                
-                -- If disabled, destroy and replace with
-                -- random enabled item of the same rarity
-                if not toggle[pos] then
-                    local rand_item = get_random_enabled(rarity)
-                    if rand_item then gm.instance_create_depth(inst.x, inst.y, 0.0, rand_item) end
-                    gm.instance_destroy(inst)
+                    -- Subtract pos by length of previous rarities
+                    if rarity > 1 then pos = pos - #Items.white_items end
+                    if rarity > 2 then pos = pos - #Items.green_items end
+                    if rarity > 3 then pos = pos - #Items.red_items end
+                    if rarity > 4 then pos = pos - #Items.orange_items end
+                    
+                    -- If disabled, destroy and replace with
+                    -- random enabled item of the same rarity
+                    if not toggle[pos] then
+                        local rand_item = get_random_enabled(rarity)
+                        if rand_item then gm.instance_create_depth(inst.x, inst.y, 0.0, rand_item) end
+                        gm.instance_destroy(inst)
+                    end
                 end
 
             end

@@ -1,6 +1,6 @@
 ﻿{
 	"name": "Item_Toggle",
-	"version_number": "1.0.1",
+	"version_number": "1.0.2",
 	"website_url": "https://github.com/Klehrik/RoRR-ItemToggle",
 	"description": "Allows for selecting which items should appear in a run.",
 	"dependencies": []
