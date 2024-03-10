@@ -1,4 +1,6 @@
 Allows for selecting which items should appear in a run.  
+(Note that you cannot toggle items during a run)
+
 Not tested in multiplayer.
 
 ---
