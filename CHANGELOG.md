@@ -6,3 +6,7 @@
 
 ### v1.0.2
 * Purple items should not break things anymore.
+
+### v1.0.3
+* Made optimizations (to a few of my mods) to reduce load.
+* Updated Installation Instructions.

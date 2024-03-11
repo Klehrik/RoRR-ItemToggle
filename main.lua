@@ -1,4 +1,4 @@
--- Item Toggle v1.0.2
+-- Item Toggle v1.0.3
 -- Klehrik
 
 log.info("Successfully loaded ".._ENV["!guid"]..".")
@@ -113,28 +113,33 @@ gm.pre_script_hook(gm.constants.__input_system_tick, function()
         local inst = gm.CInstance.instances_active[i]
         if inst then
 
-            local pos, item = Items.find_item(inst.object_index)
-            if item then
+            -- Check if this instance is actually an item or not
+            if inst.item_id ~= nil then
 
-                -- Get toggle table of item based on rarity
-                local rarity = item[3]
-                if rarity ~= Items.rarities.purple then
-                    
-                    local toggle = rarity_toggles[rarity]
+                local pos, item = Items.find_item(inst.object_index)
+                if item then
 
-                    -- Subtract pos by length of previous rarities
-                    if rarity > 1 then pos = pos - #Items.white_items end
-                    if rarity > 2 then pos = pos - #Items.green_items end
-                    if rarity > 3 then pos = pos - #Items.red_items end
-                    if rarity > 4 then pos = pos - #Items.orange_items end
-                    
-                    -- If disabled, destroy and replace with
-                    -- random enabled item of the same rarity
-                    if not toggle[pos] then
-                        local rand_item = get_random_enabled(rarity)
-                        if rand_item then gm.instance_create_depth(inst.x, inst.y, 0.0, rand_item) end
-                        gm.instance_destroy(inst)
+                    -- Get toggle table of item based on rarity
+                    local rarity = item[3]
+                    if rarity ~= Items.rarities.purple then
+                        
+                        local toggle = rarity_toggles[rarity]
+
+                        -- Subtract pos by length of previous rarities
+                        if rarity > 1 then pos = pos - #Items.white_items end
+                        if rarity > 2 then pos = pos - #Items.green_items end
+                        if rarity > 3 then pos = pos - #Items.red_items end
+                        if rarity > 4 then pos = pos - #Items.orange_items end
+                        
+                        -- If disabled, destroy and replace with
+                        -- random enabled item of the same rarity
+                        if not toggle[pos] then
+                            local rand_item = get_random_enabled(rarity)
+                            if rand_item then gm.instance_create_depth(inst.x, inst.y, 0.0, rand_item) end
+                            gm.instance_destroy(inst)
+                        end
                     end
+
                 end
 
             end
