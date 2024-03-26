@@ -1,6 +1,3 @@
-# Item Toggle
-[Thunderstore page](https://thunderstore.io/c/risk-of-rain-returns/p/Klehrik/Item_Toggle/)
-
 Allows for selecting which items should appear in a run.  
 If a disabled item is dropped, it will be turned into a random item of the same tier.  
 (Note that you cannot toggle items during a run)
@@ -19,5 +16,5 @@ Not tested in multiplayer.
 
 
 ### Usage
-* Press the Insert key to bring up the selection windows.
-* Click on any item button to toggle it on or off.
+* Open the ImGUI window display (default key is `Insert`)
+* Click on any item button to toggle it on or off (while on the character select screen).

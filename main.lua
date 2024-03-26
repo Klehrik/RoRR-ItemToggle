@@ -1,15 +1,11 @@
--- Item Toggle v1.0.3
+-- Item Toggle v1.0.4
 -- Klehrik
 
 log.info("Successfully loaded ".._ENV["!guid"]..".")
-require("./helper")
+Helper = require("./helper")
 Items = require("./items")
 
-local white_toggle = {}
-local green_toggle = {}
-local red_toggle = {}
-local orange_toggle = {}
-local yellow_toggle = {}
+local white_toggle, green_toggle, red_toggle, orange_toggle, yellow_toggle = {}, {}, {}, {}, {}
 for i = 1, #Items.white_items do table.insert(white_toggle, true) end
 for i = 1, #Items.green_items do table.insert(green_toggle, true) end
 for i = 1, #Items.red_items do table.insert(red_toggle, true) end
@@ -26,6 +22,8 @@ if succeeded then
     orange_toggle = from_file.orange
     yellow_toggle = from_file.yellow
 end
+
+local can_toggle = false
 
 
 
@@ -54,9 +52,8 @@ for r = 1, #rarity_names do
     gui.add_imgui(function()
         if ImGui.Begin(rarity_names[r]) then
             local toggle = rarity_toggles[r]
-            local can_toggle = not find_cinstance_type(gm.constants.oStageControl)
 
-            if not can_toggle then ImGui.Text("Toggling is locked during a run.") end
+            if not can_toggle then ImGui.Text("Items can only be\ntoggled on the character\nselect screen.") end
 
             if ImGui.Button("Enable All") and can_toggle then
                 for i = 1, #toggle do toggle[i] = true end
@@ -106,6 +103,13 @@ end
 
 
 gm.pre_script_hook(gm.constants.__input_system_tick, function()
+    -- Check if on CSS
+    local selectM = Helper.find_active_instance(gm.constants.oSelectMenu)
+    if Helper.does_instance_exist(selectM) then can_toggle = true
+    else can_toggle = false
+    end
+
+
     -- Loop through all instances and check if it is a dropped item
     --     If so, check if it is disabled
     --         If so, delete it and replace it with an enabled item

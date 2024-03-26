@@ -3,7 +3,7 @@
 -- A collection of all vanilla items
 -- Organized by Klehrik
 
-Items = {}
+local Items = {}
 
 local rarities = {
     white = 1,
