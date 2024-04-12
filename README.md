@@ -1,4 +1,4 @@
-Allows for selecting which items should appear in a run (while on the character select screen).  
+Allows for selecting which items should appear in a run.  
 If a disabled item is dropped, it will be turned into a random item of the same tier.  
 
 Not tested in multiplayer.

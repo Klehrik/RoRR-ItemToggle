@@ -1,4 +1,4 @@
--- Item Toggle v1.0.5
+-- Item Toggle v1.0.6
 -- Klehrik
 
 log.info("Successfully loaded ".._ENV["!guid"]..".")
@@ -11,7 +11,7 @@ local init = false
 local rarity_toggles = {{}, {}, {}, {}, {}}
 local rarity_names = {"Common", "Uncommon", "Rare", "Equipment", "Boss"}
 
-local can_toggle = false
+local can_toggle = true
 local rarity_to_check = 0
 
 
@@ -30,7 +30,7 @@ local function save_to_file()
 end
 
 
-local function spawn_random_enabled(x, y, rarity)
+local function spawn_random_enabled(x, y, rarity, stack_type)
     local enabled = {}
     local toggles = rarity_toggles[rarity]
     for k, v in pairs(toggles) do
@@ -40,7 +40,8 @@ local function spawn_random_enabled(x, y, rarity)
     end
 
     if #enabled <= 0 then return end
-    gm.instance_create_depth(x, y, 0, enabled[gm.irandom_range(1, #enabled)])
+    local item = gm.instance_create_depth(x, y, 0, enabled[gm.irandom_range(1, #enabled)])
+    item.item_stack_kind = stack_type
 end
 
 
@@ -54,7 +55,7 @@ for r = 1, #rarity_names do
             if ImGui.Begin(rarity_names[r]) then
                 local toggle = rarity_toggles[r]
 
-                if not can_toggle then ImGui.Text("Items can only be\ntoggled on the character\nselect screen.") end
+                if not can_toggle then ImGui.Text("Items cannot be\ntoggled during a run.") end
 
                 if ImGui.Button("Enable All") and can_toggle then
                     for k in pairs(toggle) do toggle[k] = true end
@@ -109,13 +110,6 @@ gm.pre_script_hook(gm.constants.__input_system_tick, function()
     end
 
 
-    -- Check if on CSS
-    local selectM = Helper.find_active_instance(gm.constants.oSelectMenu)
-    if Helper.instance_exists(selectM) then can_toggle = true
-    else can_toggle = false
-    end
-
-
     -- Check for all items of a different rarity
     -- split into every frame to reduce load
     rarity_to_check = rarity_to_check + 1
@@ -131,10 +125,19 @@ gm.pre_script_hook(gm.constants.__input_system_tick, function()
             local inst = items[j]
             
             if not rarity_toggles[rarity_to_check][inst.text1_key] then
-                spawn_random_enabled(inst.x, inst.y, rarity_to_check)
+                spawn_random_enabled(inst.x, inst.y, rarity_to_check, inst.item_stack_kind)
                 gm.instance_destroy(inst)
             end
             
         end
     end
+end)
+
+
+gm.pre_script_hook(gm.constants.run_create, function()
+    can_toggle = false
+end)
+
+gm.pre_script_hook(gm.constants.run_destroy, function()
+    can_toggle = true
 end)

@@ -19,3 +19,6 @@
 * Updated installation instructions to use the mod manager instead.
 * Rewrote around new item functions in helper.
     * Should be way less laggy post-loop.
+
+### v1.0.6
+* Fixed disabled temporary items becoming real.
