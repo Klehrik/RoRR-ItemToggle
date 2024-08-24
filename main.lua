@@ -1,137 +1,181 @@
--- Item Toggle v1.0.6
+-- Item Toggle v1.0.7
 -- Klehrik
 
 log.info("Successfully loaded ".._ENV["!guid"]..".")
-mods.on_all_mods_loaded(function() for k, v in pairs(mods) do if type(v) == "table" and v.hfuncs then Helper = v end end end)
+mods.on_all_mods_loaded(function() for _, m in pairs(mods) do if type(m) == "table" and m.RoRR_Modding_Toolkit then Actor = m.Actor Buff = m.Buff Callback = m.Callback Equipment = m.Equipment Helper = m.Helper Instance = m.Instance Item = m.Item Net = m.Net Object = m.Object Player = m.Player Resources = m.Resources Survivor = m.Survivor break end end end)
 
-local file_path = path.combine(paths.plugins_data(), "Klehrik-Item_Toggle-v2.txt")
+ItemToggle = true
 
-local init = false
+local file_path = path.combine(paths.plugins_data(), _ENV["!guid"].."-v3.txt")
 
-local rarity_toggles = {{}, {}, {}, {}, {}}
-local rarity_names = {"Common", "Uncommon", "Rare", "Equipment", "Boss"}
+local TIERS = {
+    "Common",
+    "Uncommon",
+    "Rare",
+    "Equipment",
+    "Boss"
+}
 
+local COLORS = {
+    0xFFFFFFFF, -- White
+    0xFF58B878, -- Green
+    0xFF442DC9, -- Red
+    0xFF3566D9, -- Orange
+    0xFF41CDDA  -- Yellow
+}
+
+local do_init_delay = 0
+
+local lang_map = nil
+local items = {}
 local can_toggle = true
-local rarity_to_check = 0
 
 
 
 -- ========== Functions ==========
 
-local function save_to_file()
-    -- Save to file
-    pcall(toml.encodeToFile, {
-        white   = rarity_toggles[1],
-        green   = rarity_toggles[2],
-        red     = rarity_toggles[3],
-        orange  = rarity_toggles[4],
-        yellow  = rarity_toggles[5]
-    }, {file = file_path, overwrite = true})
+function toggle_item(item, value)
+    item[4] = value
+    Item.toggle_loot(Item.find(item[2]), value)
+    save_file()
 end
 
 
-local function spawn_random_enabled(x, y, rarity, stack_type)
-    local enabled = {}
-    local toggles = rarity_toggles[rarity]
-    for k, v in pairs(toggles) do
-        if v then
-            table.insert(enabled, Helper.find_item(k).id)
+function toggle_equipment(equip, value)
+    equip[4] = value
+    Equipment.toggle_loot(Equipment.find(equip[2]), value)
+    save_file()
+end
+
+
+function save_file()
+    local save = {}
+
+    for c, tier in ipairs(items) do
+        for i, item in ipairs(tier) do
+            save[item[2]] = item[4]
         end
     end
 
-    if #enabled <= 0 then return end
-    local item = gm.instance_create_depth(x, y, 0, enabled[gm.irandom_range(1, #enabled)])
-    item.item_stack_kind = stack_type
+    pcall(toml.encodeToFile, {save = save}, {file = file_path, overwrite = true})
 end
 
+
+function load_file()
+    local success, file = pcall(toml.decodeFromFile, file_path)
+    if success then
+
+        for k, v in pairs(file.save) do
+            local exit = false
+            for c, tier in ipairs(items) do
+                for i, item in ipairs(tier) do
+                    if item[2] == k then
+                        if item[5] == "item" then toggle_item(item, v)
+                        else toggle_equipment(item, v) end
+                        exit = true
+                        break
+                    end
+                end
+                if exit then break end
+            end
+        end
+
+    end
+end
 
 
 -- ========== Main ==========
 
--- Loop through all rarities and add all item buttons
-for r = 1, #rarity_names do
+function __post_initialize()
+    lang_map = gm.variable_global_get("_language_map")
+    for i = 1, 5 do table.insert(items, {}) end
+    
+
+    -- Populate items
+    local class_item = gm.variable_global_get("class_item")
+    for i, item in ipairs(class_item) do
+        if item[7] <= 4.0 then
+            local loc = item[1].."-"..item[2]
+            local name = gm.ds_map_find_value(lang_map, item[3])
+            if not name then name = "<"..loc..">" end
+            table.insert(items[item[7] + 1], {i, loc, name, true, "item"})
+        end
+    end
+
+    local class_equipment = gm.variable_global_get("class_equipment")
+    for i, equip in ipairs(class_equipment) do
+        local loc = equip[1].."-"..equip[2]
+        local name = gm.ds_map_find_value(lang_map, equip[3])
+        if not name then name = "<"..loc..">" end
+        table.insert(items[4], {i, loc, name, true, "equip"})
+    end
+
+
+    -- Load file
+    load_file()
+
+
+    -- Add ImGui window
     gui.add_imgui(function()
-        if init then
-            if ImGui.Begin(rarity_names[r]) then
-                local toggle = rarity_toggles[r]
+        if ImGui.Begin("Item Toggle") then
+            ImGui.Text("Click on the checkbox beside an\nitem to toggle it (check means enabled).")
+            ImGui.Text("You will not be able to toggle\nitems during a run.")
 
-                if not can_toggle then ImGui.Text("Items cannot be\ntoggled during a run.") end
+            -- Items
+            for c, tier in ipairs(items) do
+                if c ~= 4 then
+                    ImGui.Text("\n-=  "..TIERS[c].."  =-")
 
-                if ImGui.Button("Enable All") and can_toggle then
-                    for k in pairs(toggle) do toggle[k] = true end
-                    save_to_file()
-                elseif ImGui.Button("Disable All") and can_toggle then
-                    for k in pairs(toggle) do toggle[k] = false end
-                    save_to_file()
-                end
-
-                ImGui.Text("")
-
-                local items = Helper.get_all_items(r)
-                for i = 1, #items do
-                    local c = "  "
-                    if toggle[items[i].localization] then c = "v" end
-                    if ImGui.Button("["..c.."]  "..items[i].name) and can_toggle then
-                        toggle[items[i].localization] = not toggle[items[i].localization]
-                        save_to_file()
+                    if ImGui.Button("Toggle all "..TIERS[c]) and can_toggle then
+                        local toggle_type = false
+                        for i, item in ipairs(tier) do
+                            if not item[4] then
+                                toggle_type = true
+                                break
+                            end
+                        end
+                        for i, item in ipairs(tier) do
+                            toggle_item(item, toggle_type)
+                        end
                     end
+                    
+                    ImGui.PushStyleColor(ImGuiCol.Text, COLORS[c])
+                    for i, item in ipairs(tier) do
+                        local value, pressed = ImGui.Checkbox(item[3], item[4])
+                        if pressed and can_toggle then toggle_item(item, value) end
+                    end
+                    ImGui.PopStyleColor()
                 end
             end
+
+
+            -- Equipment
+            ImGui.Text("\n-=  "..TIERS[4].."  =-")
+
+            if ImGui.Button("Toggle all "..TIERS[4]) and can_toggle then
+                local toggle_type = false
+                for i, equip in ipairs(items[4]) do
+                    if not equip[4] then
+                        toggle_type = true
+                        break
+                    end
+                end
+                for i, equip in ipairs(items[4]) do
+                    toggle_equipment(equip, toggle_type)
+                end
+            end
+
+            ImGui.PushStyleColor(ImGuiCol.Text, COLORS[4])
+            for i, equip in ipairs(items[4]) do
+                local value, pressed = ImGui.Checkbox(equip[3], equip[4])
+                if pressed and can_toggle then toggle_equipment(equip, value) end
+            end
+            ImGui.PopStyleColor()
         end
 
         ImGui.End()
     end)
 end
-
-
-gm.pre_script_hook(gm.constants.__input_system_tick, function()
-    -- Initialize
-    if not init then
-        init = true
-
-        for i = 1, #rarity_toggles do
-            local items = Helper.get_all_items(i)
-            for j = 1, #items do
-                rarity_toggles[i][items[j].localization] = true
-            end
-        end
-
-        -- Load from file
-        local succeeded, from_file = pcall(toml.decodeFromFile, file_path)
-        if succeeded then
-            rarity_toggles = {
-                from_file.white,
-                from_file.green,
-                from_file.red,
-                from_file.orange,
-                from_file.yellow
-            }
-        end
-    end
-
-
-    -- Check for all items of a different rarity
-    -- split into every frame to reduce load
-    rarity_to_check = rarity_to_check + 1
-    if rarity_to_check > #rarity_toggles then rarity_to_check = 1 end
-
-    local item_tables = Helper.get_all_items(rarity_to_check)
-
-    for i = 1, #item_tables do
-        local current = item_tables[i]
-        local items = Helper.find_active_instance_all(current.id)
-        for j = 1, #items do
-
-            local inst = items[j]
-            
-            if not rarity_toggles[rarity_to_check][inst.text1_key] then
-                spawn_random_enabled(inst.x, inst.y, rarity_to_check, inst.item_stack_kind)
-                gm.instance_destroy(inst)
-            end
-            
-        end
-    end
-end)
 
 
 gm.pre_script_hook(gm.constants.run_create, function()

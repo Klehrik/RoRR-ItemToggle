@@ -22,3 +22,7 @@
 
 ### v1.0.6
 * Fixed disabled temporary items becoming real.
+
+### v1.0.7
+* Reworked internal functionality.
+* Collapsed interface into a single ImGui window.
