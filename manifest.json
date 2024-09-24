@@ -1,10 +1,10 @@
 ﻿{
 	"name": "Item_Toggle",
-	"version_number": "1.0.7",
+	"version_number": "1.0.8",
 	"website_url": "https://github.com/Klehrik/RoRR-ItemToggle",
 	"description": "Allows for toggling which items should appear in a run.",
 	"dependencies": [
-		"ReturnOfModding-ReturnOfModding-1.0.34",
-		"RoRRModdingToolkit-RoRR_Modding_Toolkit-1.0.13"
+		"ReturnOfModding-ReturnOfModding-1.0.38",
+		"RoRRModdingToolkit-RoRR_Modding_Toolkit-1.1.0"
 	]
 }

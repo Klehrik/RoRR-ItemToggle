@@ -1,8 +1,8 @@
--- Item Toggle v1.0.7
+-- Item Toggle v1.0.8
 -- Klehrik
 
 log.info("Successfully loaded ".._ENV["!guid"]..".")
-mods.on_all_mods_loaded(function() for _, m in pairs(mods) do if type(m) == "table" and m.RoRR_Modding_Toolkit then Actor = m.Actor Buff = m.Buff Callback = m.Callback Equipment = m.Equipment Helper = m.Helper Instance = m.Instance Item = m.Item Net = m.Net Object = m.Object Player = m.Player Resources = m.Resources Survivor = m.Survivor break end end end)
+mods.on_all_mods_loaded(function() for _, m in pairs(mods) do if type(m) == "table" and m.RoRR_Modding_Toolkit then Achievement = m.Achievement Actor = m.Actor Alarm = m.Alarm Array = m.Array Artifact = m.Artifact Buff = m.Buff Callback = m.Callback Class = m.Class Color = m.Color Equipment = m.Equipment Helper = m.Helper Instance = m.Instance Interactable = m.Interactable Item = m.Item Language = m.Language List = m.List Net = m.Net Object = m.Object Player = m.Player Resources = m.Resources Skill = m.Skill State = m.State Survivor_Log = m.Survivor_Log Survivor = m.Survivor Wrap = m.Wrap break end end end)
 
 ItemToggle = true
 
@@ -24,9 +24,6 @@ local COLORS = {
     0xFF41CDDA  -- Yellow
 }
 
-local do_init_delay = 0
-
-local lang_map = nil
 local items = {}
 local can_toggle = true
 
@@ -36,14 +33,14 @@ local can_toggle = true
 
 function toggle_item(item, value)
     item[4] = value
-    Item.toggle_loot(Item.find(item[2]), value)
+    Item.find(item[2]):toggle_loot(value)
     save_file()
 end
 
 
 function toggle_equipment(equip, value)
     equip[4] = value
-    Equipment.toggle_loot(Equipment.find(equip[2]), value)
+    Equipment.find(equip[2]):toggle_loot(value)
     save_file()
 end
 
@@ -87,25 +84,21 @@ end
 -- ========== Main ==========
 
 function __post_initialize()
-    lang_map = gm.variable_global_get("_language_map")
     for i = 1, 5 do table.insert(items, {}) end
-    
 
     -- Populate items
-    local class_item = gm.variable_global_get("class_item")
-    for i, item in ipairs(class_item) do
+    for i, item in ipairs(Class.ITEM) do
         if item[7] <= 4.0 then
             local loc = item[1].."-"..item[2]
-            local name = gm.ds_map_find_value(lang_map, item[3])
+            local name = Language.translate_token(item[3])
             if not name then name = "<"..loc..">" end
             table.insert(items[item[7] + 1], {i, loc, name, true, "item"})
         end
     end
 
-    local class_equipment = gm.variable_global_get("class_equipment")
-    for i, equip in ipairs(class_equipment) do
+    for i, equip in ipairs(Class.EQUIPMENT) do
         local loc = equip[1].."-"..equip[2]
-        local name = gm.ds_map_find_value(lang_map, equip[3])
+        local name = Language.translate_token(equip[3])
         if not name then name = "<"..loc..">" end
         table.insert(items[4], {i, loc, name, true, "equip"})
     end
