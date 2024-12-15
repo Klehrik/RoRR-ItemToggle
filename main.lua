@@ -1,12 +1,10 @@
--- Item Toggle v1.0.8
+-- Item Toggle
 -- Klehrik
 
-log.info("Successfully loaded ".._ENV["!guid"]..".")
-mods.on_all_mods_loaded(function() for _, m in pairs(mods) do if type(m) == "table" and m.RoRR_Modding_Toolkit then Achievement = m.Achievement Actor = m.Actor Alarm = m.Alarm Array = m.Array Artifact = m.Artifact Buff = m.Buff Callback = m.Callback Class = m.Class Color = m.Color Equipment = m.Equipment Helper = m.Helper Instance = m.Instance Interactable = m.Interactable Item = m.Item Language = m.Language List = m.List Net = m.Net Object = m.Object Player = m.Player Resources = m.Resources Skill = m.Skill State = m.State Survivor_Log = m.Survivor_Log Survivor = m.Survivor Wrap = m.Wrap break end end end)
+mods["MGReturns-ENVY"].auto()
+mods["RoRRModdingToolkit-RoRR_Modding_Toolkit"].auto(true)
 
-ItemToggle = true
-
-local file_path = path.combine(paths.plugins_data(), _ENV["!guid"].."-v3.txt")
+file_path = path.combine(paths.plugins_data(), _ENV["!guid"].."-v3.txt")
 
 local TIERS = {
     "Common",
@@ -24,83 +22,47 @@ local COLORS = {
     0xFF41CDDA  -- Yellow
 }
 
-local items = {}
+item_table = {}
 local can_toggle = true
 
+require("./helper")
 
-
--- ========== Functions ==========
-
-function toggle_item(item, value)
-    item[4] = value
-    Item.find(item[2]):toggle_loot(value)
-    save_file()
-end
-
-
-function toggle_equipment(equip, value)
-    equip[4] = value
-    Equipment.find(equip[2]):toggle_loot(value)
-    save_file()
-end
-
-
-function save_file()
-    local save = {}
-
-    for c, tier in ipairs(items) do
-        for i, item in ipairs(tier) do
-            save[item[2]] = item[4]
-        end
-    end
-
-    pcall(toml.encodeToFile, {save = save}, {file = file_path, overwrite = true})
-end
-
-
-function load_file()
-    local success, file = pcall(toml.decodeFromFile, file_path)
-    if success then
-
-        for k, v in pairs(file.save) do
-            local exit = false
-            for c, tier in ipairs(items) do
-                for i, item in ipairs(tier) do
-                    if item[2] == k then
-                        if item[5] == "item" then toggle_item(item, v)
-                        else toggle_equipment(item, v) end
-                        exit = true
-                        break
-                    end
-                end
-                if exit then break end
-            end
-        end
-
-    end
-end
 
 
 -- ========== Main ==========
 
-function __post_initialize()
-    for i = 1, 5 do table.insert(items, {}) end
+Initialize(function()
+    for i = 1, 5 do table.insert(item_table, {}) end
 
-    -- Populate items
-    for i, item in ipairs(Class.ITEM) do
-        if item[7] <= 4.0 then
-            local loc = item[1].."-"..item[2]
-            local name = Language.translate_token(item[3])
-            if not name then name = "<"..loc..">" end
-            table.insert(items[item[7] + 1], {i, loc, name, true, "item"})
+    -- Populate item_table
+    local items = Item.find_all()
+    for _, item in ipairs(items) do
+        if item.tier <= Item.TIER.boss and item:is_loot() then
+            local nsid = item.namespace.."-"..item.identifier
+            local name = Language.translate_token(item.token_name)
+            if not name then name = "<"..nsid..">" end
+            table.insert(item_table[item.tier + 1], {
+                nsid    = nsid,
+                name    = name,
+                toggle  = true,
+                kind    = "item"
+            })
         end
     end
 
-    for i, equip in ipairs(Class.EQUIPMENT) do
-        local loc = equip[1].."-"..equip[2]
-        local name = Language.translate_token(equip[3])
-        if not name then name = "<"..loc..">" end
-        table.insert(items[4], {i, loc, name, true, "equip"})
+    local equips = Equipment.find_all()
+    for _, equip in ipairs(equips) do
+        if equip:is_loot() then
+            local nsid = equip.namespace.."-"..equip.identifier
+            local name = Language.translate_token(equip.token_name)
+            if not name then name = "<"..nsid..">" end
+            table.insert(item_table[Item.TIER.equipment + 1], {
+                nsid    = nsid,
+                name    = name,
+                toggle  = true,
+                kind    = "equip"
+            })
+        end
     end
 
 
@@ -115,14 +77,14 @@ function __post_initialize()
             ImGui.Text("You will not be able to toggle\nitems during a run.")
 
             -- Items
-            for c, tier in ipairs(items) do
-                if c ~= 4 then
+            for c, tier in ipairs(item_table) do
+                if c ~= (Item.TIER.equipment + 1) then
                     ImGui.Text("\n-=  "..TIERS[c].."  =-")
 
                     if ImGui.Button("Toggle all "..TIERS[c]) and can_toggle then
                         local toggle_type = false
                         for i, item in ipairs(tier) do
-                            if not item[4] then
+                            if not item.toggle then
                                 toggle_type = true
                                 break
                             end
@@ -134,7 +96,7 @@ function __post_initialize()
                     
                     ImGui.PushStyleColor(ImGuiCol.Text, COLORS[c])
                     for i, item in ipairs(tier) do
-                        local value, pressed = ImGui.Checkbox(item[3], item[4])
+                        local value, pressed = ImGui.Checkbox(item.name, item.toggle)
                         if pressed and can_toggle then toggle_item(item, value) end
                     end
                     ImGui.PopStyleColor()
@@ -143,24 +105,24 @@ function __post_initialize()
 
 
             -- Equipment
-            ImGui.Text("\n-=  "..TIERS[4].."  =-")
+            ImGui.Text("\n-=  "..TIERS[Item.TIER.equipment + 1].."  =-")
 
-            if ImGui.Button("Toggle all "..TIERS[4]) and can_toggle then
+            if ImGui.Button("Toggle all "..TIERS[Item.TIER.equipment + 1]) and can_toggle then
                 local toggle_type = false
-                for i, equip in ipairs(items[4]) do
-                    if not equip[4] then
+                for i, equip in ipairs(item_table[Item.TIER.equipment + 1]) do
+                    if not equip.toggle then
                         toggle_type = true
                         break
                     end
                 end
-                for i, equip in ipairs(items[4]) do
+                for i, equip in ipairs(item_table[Item.TIER.equipment + 1]) do
                     toggle_equipment(equip, toggle_type)
                 end
             end
 
-            ImGui.PushStyleColor(ImGuiCol.Text, COLORS[4])
-            for i, equip in ipairs(items[4]) do
-                local value, pressed = ImGui.Checkbox(equip[3], equip[4])
+            ImGui.PushStyleColor(ImGuiCol.Text, COLORS[Item.TIER.equipment + 1])
+            for i, equip in ipairs(item_table[Item.TIER.equipment + 1]) do
+                local value, pressed = ImGui.Checkbox(equip.name, equip.toggle)
                 if pressed and can_toggle then toggle_equipment(equip, value) end
             end
             ImGui.PopStyleColor()
@@ -168,7 +130,7 @@ function __post_initialize()
 
         ImGui.End()
     end)
-end
+end, true)
 
 
 gm.pre_script_hook(gm.constants.run_create, function()

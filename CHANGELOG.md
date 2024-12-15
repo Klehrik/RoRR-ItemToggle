@@ -1,3 +1,6 @@
+### v1.0.9
+* Updated alongside RMT.
+
 ### v1.0.8
 * Updated alongside RMT.
 

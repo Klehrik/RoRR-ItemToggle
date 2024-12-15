@@ -1,6 +1,6 @@
 Allows for toggling which items should appear in a run.  
 
-Not tested in multiplayer, but it should use the host's settings.  
+Uses the host's settings in multiplayer.  
 
 ---
 
@@ -11,7 +11,3 @@ Join the [Return of Modding server](https://discord.gg/VjS57cszMq) for support.
 
 ### Usage
 * Open the ImGui window display (default key is `Insert`) to toggle items.
-
-
-### Credits
-* Everybody active in the Return of Modding server.
